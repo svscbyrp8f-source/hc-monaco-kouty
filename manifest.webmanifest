@@ -1,0 +1,18 @@
+{
+  "name": "HC Monaco Kouty",
+  "short_name": "HC Monaco",
+  "description": "Soupiska, zápasy a statistiky HC Monaco Kouty",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#0b1118",
+  "theme_color": "#101820",
+  "icons": [
+    {
+      "src": "icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}

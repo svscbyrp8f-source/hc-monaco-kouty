@@ -1,0 +1,131 @@
+<!doctype html>
+<html lang="cs">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#101820">
+  <meta name="description" content="Soupiska, zápasy a statistiky HC Monaco Kouty">
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="icon" href="icon.svg" type="image/svg+xml">
+  <title>HC Monaco Kouty</title>
+  <style>
+    :root{--bg:#0b1118;--panel:#141e29;--panel2:#1b2937;--line:#2a3a4a;--text:#f3f6f9;--muted:#9eb0c1;--gold:#e7b84b;--red:#d64b4b;--green:#49b785}
+    *{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--text);font:16px/1.45 system-ui,-apple-system,Segoe UI,sans-serif}
+    header{padding:22px 18px 16px;background:linear-gradient(135deg,#101820,#1b2937);border-bottom:1px solid var(--line)}
+    .brand{display:flex;align-items:center;gap:12px}.logo{width:52px;height:52px;border-radius:16px;background:var(--gold);color:#101820;display:grid;place-items:center;font-weight:950;font-size:18px;letter-spacing:-1px}
+    h1{font-size:21px;line-height:1.15;margin:0}header p{color:var(--muted);margin:5px 0 0;font-size:13px}
+    main{max-width:850px;margin:auto;padding:16px 14px 90px}.tabs{display:flex;gap:8px;overflow:auto;margin-bottom:16px}
+    button,.tab{font:inherit;cursor:pointer;border:1px solid var(--line);border-radius:12px;padding:10px 13px;background:var(--panel2);color:var(--text)}
+    button.primary{background:var(--gold);border-color:var(--gold);color:#101820;font-weight:800}button.danger{background:#48252a;border-color:#67333a}
+    .tab{white-space:nowrap}.tab.active{background:var(--gold);color:#101820;border-color:var(--gold);font-weight:800}
+    .grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}.stat,.panel,.player,.match{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:14px}
+    .stat .num{font-size:27px;font-weight:850;letter-spacing:-1px}.muted{color:var(--muted);font-size:13px}.section-title{display:flex;align-items:center;justify-content:space-between;gap:12px;margin:20px 0 10px}.section-title h2{font-size:18px;margin:0}
+    .stack{display:grid;gap:10px}.player{display:flex;gap:12px;align-items:center}.avatar{width:58px;height:58px;border-radius:14px;background:var(--panel2);display:grid;place-items:center;overflow:hidden;flex-shrink:0;font-weight:900;color:var(--gold)}.avatar img{width:100%;height:100%;object-fit:cover}
+    .pinfo{flex:1;min-width:0}.pinfo h3,.match h3{margin:0;font-size:16px}.numbers{display:flex;gap:7px;flex-wrap:wrap;margin-top:7px}.pill{font-size:12px;color:var(--muted);background:var(--panel2);padding:4px 7px;border-radius:8px}
+    .formgrid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}.field{display:grid;gap:5px}.field.full{grid-column:1/-1}label{font-size:12px;color:var(--muted)}input,select,textarea{width:100%;padding:11px;border:1px solid var(--line);border-radius:10px;background:#0e1720;color:var(--text);font:inherit}input[type=file]{padding:8px} .actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
+    .empty{padding:24px;text-align:center;color:var(--muted);border:1px dashed var(--line);border-radius:14px}.notice{border:1px solid #66572e;background:#2b2619;color:#f1d994;padding:12px;border-radius:12px;font-size:13px;margin-bottom:14px}
+    .hidden{display:none!important}.match-top{display:flex;justify-content:space-between;gap:10px;align-items:start}.score{font-weight:900;color:var(--gold);font-size:20px}.smallbtn{padding:7px 9px;font-size:13px}.rank{display:grid;grid-template-columns:1fr auto;gap:8px;padding:10px 0;border-bottom:1px solid var(--line)}.rank:last-child{border:0}
+    footer{text-align:center;color:var(--muted);font-size:12px;padding:22px}
+    @media(min-width:650px){.grid{grid-template-columns:repeat(4,minmax(0,1fr))}.stack.two{grid-template-columns:repeat(2,minmax(0,1fr))}}
+  </style>
+</head>
+<body>
+<header><div class="brand"><div class="logo">HC<br>MK</div><div><h1>HC MONACO KOUTY</h1><p>Soupiska · Zápasy · Statistiky</p></div></div></header>
+<main>
+  <div class="notice" id="demoNotice"><strong>Ukázkový režim:</strong> data se zatím ukládají jen do tohoto prohlížeče. Pro společná data týmu je potřeba dokončit připojení databáze a zabezpečené přihlášení podle README.</div>
+  <nav class="tabs" aria-label="Hlavní navigace">
+    <button class="tab active" data-tab="home">Přehled</button><button class="tab" data-tab="roster">Soupiska</button><button class="tab" data-tab="matches">Zápasy</button><button class="tab" data-tab="stats">Statistiky</button><button class="tab" data-tab="admin">Správa</button>
+  </nav>
+  <section id="home">
+    <div class="grid" id="summary"></div>
+    <div class="section-title"><h2>Poslední zápasy</h2><button class="smallbtn" data-go="matches">Všechny zápasy</button></div><div class="stack" id="recentMatches"></div>
+    <div class="section-title"><h2>Nejproduktivnější hráči</h2><button class="smallbtn" data-go="stats">Celé statistiky</button></div><div class="panel" id="topPlayers"></div>
+  </section>
+  <section id="roster" class="hidden">
+    <div class="section-title"><h2>Soupiska hráčů</h2><span class="muted" id="rosterCount"></span></div>
+    <div class="field"><label for="playerSearch">Hledat hráče</label><input id="playerSearch" placeholder="Jméno nebo číslo dresu"></div>
+    <div class="stack" id="rosterList" style="margin-top:12px"></div>
+  </section>
+  <section id="matches" class="hidden">
+    <div class="section-title"><h2>Zápasy</h2><span class="muted" id="matchCount"></span></div><div class="stack" id="matchList"></div>
+  </section>
+  <section id="stats" class="hidden">
+    <div class="section-title"><h2>Statistiky sezóny</h2></div><div class="panel" id="statsTable"></div>
+    <p class="muted">Body = góly + asistence. Průměr gólů = góly / počet zápasů, ve kterých hráč nastoupil. Plus/minus a trestné minuty se zapisují po jednotlivých zápasech.</p>
+  </section>
+  <section id="admin" class="hidden">
+    <div class="notice">Tato ukázka nemá skutečné přihlášení. Nezadávej sem citlivé údaje a nepovažuj lokální režim za zabezpečený. Produkční režim s přístupem jen pro správce se nastaví podle README.</div>
+    <div class="section-title"><h2>Správa soupisky</h2></div>
+    <form id="playerForm" class="panel">
+      <input type="hidden" id="playerId">
+      <div class="formgrid">
+        <div class="field"><label for="pName">Jméno hráče *</label><input id="pName" required placeholder="Jan Novák"></div>
+        <div class="field"><label for="pNumber">Číslo dresu</label><input id="pNumber" type="number" min="0" max="99" placeholder="18"></div>
+        <div class="field"><label for="pPosition">Pozice</label><select id="pPosition"><option>Útočník</option><option>Obránce</option><option>Brankář</option></select></div>
+        <div class="field"><label for="pPhoto">Fotografie (volitelné)</label><input id="pPhoto" type="file" accept="image/*"></div>
+        <div class="field full"><label for="pNote">Poznámka (volitelné)</label><input id="pNote" placeholder="Např. kapitán"></div>
+      </div><div class="actions"><button class="primary" type="submit">Uložit hráče</button><button type="button" id="cancelPlayer">Vymazat formulář</button></div>
+    </form>
+    <div class="section-title"><h2>Zapsat zápas</h2></div>
+    <form id="matchForm" class="panel">
+      <input type="hidden" id="matchId">
+      <div class="formgrid">
+        <div class="field"><label for="mDate">Datum *</label><input id="mDate" type="date" required></div>
+        <div class="field"><label for="mOpponent">Soupeř *</label><input id="mOpponent" required placeholder="HC soupeř"></div>
+        <div class="field"><label for="mHome">Typ zápasu</label><select id="mHome"><option value="home">Domácí</option><option value="away">Venkovní</option></select></div>
+        <div class="field"><label for="mStatus">Stav</label><select id="mStatus"><option value="played">Odehráno</option><option value="upcoming">Nadcházející</option></select></div>
+        <div class="field"><label for="mUs">Góly HC Monaco Kouty</label><input id="mUs" type="number" min="0" value="0"></div>
+        <div class="field"><label for="mThem">Góly soupeře</label><input id="mThem" type="number" min="0" value="0"></div>
+        <div class="field full"><label for="mNote">Poznámka</label><textarea id="mNote" rows="2" placeholder="Např. turnaj, hala…"></textarea></div>
+      </div>
+      <div class="section-title"><h2>Výkon hráčů v tomto zápase</h2></div>
+      <p class="muted">U každého hráče zapiš góly, asistence, +/−, trestné minuty a zda nastoupil.</p>
+      <div id="matchPlayerStats" class="stack"></div>
+      <div class="actions"><button class="primary" type="submit">Uložit zápas a statistiky</button><button type="button" id="cancelMatch">Vymazat formulář</button></div>
+    </form>
+    <div class="section-title"><h2>Export a údržba</h2></div><div class="panel"><p class="muted">Stáhni zálohu ukázkových dat nebo je přenes do jiného prohlížeče.</p><div class="actions"><button id="exportBtn">Exportovat JSON</button><label class="tab" for="importFile">Importovat JSON</label><input id="importFile" class="hidden" type="file" accept="application/json"><button class="danger" id="resetBtn">Smazat místní data</button></div></div>
+  </section>
+  <footer>HC Monaco Kouty · Týmová aplikace · Ukázková verze</footer>
+</main>
+<script>
+const KEY='hcmk-demo-v1';
+const $=id=>document.getElementById(id);
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+let db=load();
+function load(){try{return JSON.parse(localStorage.getItem(KEY))||{players:[],matches:[]}}catch{return {players:[],matches:[]}}}
+function save(){localStorage.setItem(KEY,JSON.stringify(db));render()}
+function uid(){return Math.random().toString(36).slice(2,10)}
+function fmtDate(d){if(!d)return 'Datum neuvedeno';return new Date(d+'T12:00:00').toLocaleDateString('cs-CZ',{day:'numeric',month:'short',year:'numeric'})}
+function pstats(p){let s={g:0,a:0,pm:0,pim:0,gp:0};db.matches.filter(m=>m.status==='played').forEach(m=>{let x=(m.stats||{})[p.id]||{};s.g+=+x.g||0;s.a+=+x.a||0;s.pm+=+x.pm||0;s.pim+=+x.pim||0;if(x.played)s.gp++});s.pts=s.g+s.a;s.avg=s.gp?(s.g/s.gp):0;return s}
+function totals(){let played=db.matches.filter(m=>m.status==='played');return {players:db.players.length,matches:played.length,w:played.filter(m=>+m.us>+m.them).length,d:played.filter(m=>+m.us===+m.them).length,l:played.filter(m=>+m.us<+m.them).length,g:played.reduce((a,m)=>a+(+m.us||0),0),ga:played.reduce((a,m)=>a+(+m.them||0),0)}}
+function card(n,l){return `<div class="stat"><div class="num">${n}</div><div class="muted">${l}</div></div>`}
+function avatar(p){return `<div class="avatar">${p.photo?`<img alt="" src="${p.photo}">`:esc((p.name||'?').split(' ').map(x=>x[0]).slice(0,2).join('').toUpperCase())}</div>`}
+function playerCard(p){let s=pstats(p);return `<article class="player">${avatar(p)}<div class="pinfo"><h3>${p.number!==''&&p.number!=null?'#'+esc(p.number)+' ':''}${esc(p.name)}</h3><div class="muted">${esc(p.position||'Pozice neuvedena')}${p.note?' · '+esc(p.note):''}</div><div class="numbers"><span class="pill">${s.g} G</span><span class="pill">${s.a} A</span><span class="pill">${s.pts} B</span><span class="pill">${s.pm>0?'+':''}${s.pm} +/-</span><span class="pill">${s.pim} TM</span></div></div><button class="smallbtn" data-edit-player="${p.id}">Upravit</button></article>`}
+function matchCard(m){return `<article class="match"><div class="match-top"><div><h3>${esc(m.opponent)}</h3><div class="muted">${fmtDate(m.date)} · ${m.home==='away'?'Venku':'Doma'}${m.status==='upcoming'?' · Nadcházející':''}</div></div>${m.status==='played'?`<div class="score">${m.us} : ${m.them}</div>`:`<span class="pill">Plánováno</span>`}</div>${m.note?`<p class="muted">${esc(m.note)}</p>`:''}<div class="actions"><button class="smallbtn" data-edit-match="${m.id}">Upravit</button><button class="smallbtn danger" data-delete-match="${m.id}">Smazat</button></div></article>`}
+function render(){let t=totals();$('summary').innerHTML=card(t.players,'Hráčů')+card(t.matches,'Odehraných zápasů')+card(`${t.w}-${t.d}-${t.l}`,'Výhry–remízy–prohry')+card(`${t.g}:${t.ga}`,'Skóre sezóny');
+let ms=[...db.matches].sort((a,b)=>(b.date||'').localeCompare(a.date||''));$('recentMatches').innerHTML=ms.length?ms.slice(0,3).map(matchCard).join(''):'<div class="empty">Zatím nejsou zadané zápasy.</div>';
+let top=[...db.players].map(p=>({p,s:pstats(p)})).sort((a,b)=>b.s.pts-a.s.pts||b.s.g-a.s.g).slice(0,5);$('topPlayers').innerHTML=top.length?top.map((x,i)=>`<div class="rank"><span>${i+1}. ${esc(x.p.name)}</span><strong>${x.s.pts} bodů <span class="muted">(${x.s.g}+${x.s.a})</span></strong></div>`).join(''):'<div class="muted">Přidej hráče a po zápase zapiš jejich statistiky.</div>';
+const q=($('playerSearch').value||'').toLowerCase();let ps=[...db.players].filter(p=>(p.name+' '+p.number).toLowerCase().includes(q)).sort((a,b)=>(+a.number||99)-(+b.number||99));$('rosterCount').textContent=ps.length+' hráčů';$('rosterList').innerHTML=ps.length?ps.map(playerCard).join(''):'<div class="empty">Soupiska je zatím prázdná. Přidej hráče v sekci Správa.</div>';
+$('matchCount').textContent=db.matches.length+' zápasů';$('matchList').innerHTML=ms.length?ms.map(matchCard).join(''):'<div class="empty">Zatím nejsou zadané zápasy.</div>';
+$('statsTable').innerHTML=db.players.length?`<div style="overflow-x:auto"><table style="border-collapse:collapse;width:100%;font-size:13px"><thead><tr>${['Hráč','Z','G','A','B','+/-','TM','G/Z'].map(x=>`<th style="text-align:left;padding:9px 6px;border-bottom:1px solid var(--line)">${x}</th>`).join('')}</tr></thead><tbody>${[...db.players].map(p=>{let s=pstats(p);return `<tr>${[`#${p.number||'–'} ${esc(p.name)}`,s.gp,s.g,s.a,s.pts,s.pm,s.pim,s.avg.toFixed(2).replace('.',',')].map(x=>`<td style="padding:9px 6px;border-bottom:1px solid var(--line)">${x}</td>`).join('')}</tr>`}).join('')}</tbody></table></div>`:'<div class="empty">Statistiky se zobrazí po přidání hráčů.</div>';
+$('matchPlayerStats').innerHTML=db.players.length?db.players.map(p=>`<div class="player" style="align-items:start"><div class="pinfo"><strong>${p.number!==''?'#'+esc(p.number)+' ':''}${esc(p.name)}</strong><div class="formgrid" style="margin-top:8px"><div class="field"><label>Góly</label><input type="number" min="0" value="0" data-stat="${p.id}" data-key="g"></div><div class="field"><label>Asistence</label><input type="number" min="0" value="0" data-stat="${p.id}" data-key="a"></div><div class="field"><label>Plus/minus</label><input type="number" value="0" data-stat="${p.id}" data-key="pm"></div><div class="field"><label>Trestné minuty</label><input type="number" min="0" value="0" data-stat="${p.id}" data-key="pim"></div><label class="field" style="display:flex;align-items:center;gap:8px"><span>Nastoupil?</span><input type="checkbox" checked data-stat="${p.id}" data-key="played" style="width:auto"></label></div></div></div>`).join(''):'<div class="empty">Nejdřív přidej hráče do soupisky.</div>';
+}
+function showTab(tab){document.querySelectorAll('main section').forEach(s=>s.classList.toggle('hidden',s.id!==tab));document.querySelectorAll('.tab[data-tab]').forEach(b=>b.classList.toggle('active',b.dataset.tab===tab));if(tab==='admin')render()}
+document.querySelectorAll('[data-tab]').forEach(b=>b.addEventListener('click',()=>showTab(b.dataset.tab)));
+document.addEventListener('click',e=>{let go=e.target.closest('[data-go]');if(go)showTab(go.dataset.go);let ep=e.target.closest('[data-edit-player]');if(ep)editPlayer(ep.dataset.editPlayer);let em=e.target.closest('[data-edit-match]');if(em)editMatch(em.dataset.editMatch);let dm=e.target.closest('[data-delete-match]');if(dm&&confirm('Opravdu smazat tento zápas?')){db.matches=db.matches.filter(m=>m.id!==dm.dataset.deleteMatch);save()}});
+$('playerSearch').addEventListener('input',render);
+$('playerForm').addEventListener('submit',async e=>{e.preventDefault();let id=$('playerId').value||uid(),old=db.players.find(p=>p.id===id),photo=old?.photo||'';let file=$('pPhoto').files[0];if(file){if(file.size>1200000){alert('Fotka je příliš velká. Vyber prosím obrázek do 1,2 MB.');return}photo=await resizePhoto(file)}
+let p={id,name:$('pName').value.trim(),number:$('pNumber').value,position:$('pPosition').value,note:$('pNote').value.trim(),photo};let ix=db.players.findIndex(x=>x.id===id);if(ix>=0)db.players[ix]=p;else db.players.push(p);$('playerForm').reset();$('playerId').value='';$('pPhoto').value='';save()});
+function resizePhoto(file){return new Promise(resolve=>{let img=new Image(),url=URL.createObjectURL(file);img.onload=()=>{let c=document.createElement('canvas'),scale=Math.min(1,500/Math.max(img.width,img.height));c.width=Math.round(img.width*scale);c.height=Math.round(img.height*scale);c.getContext('2d').drawImage(img,0,0,c.width,c.height);URL.revokeObjectURL(url);resolve(c.toDataURL('image/jpeg',.72))};img.onerror=()=>resolve('');img.src=url})}
+function editPlayer(id){let p=db.players.find(x=>x.id===id);if(!p)return;showTab('admin');$('playerId').value=p.id;$('pName').value=p.name;$('pNumber').value=p.number;$('pPosition').value=p.position;$('pNote').value=p.note||'';window.scrollTo({top:document.body.scrollHeight,behavior:'smooth'})}
+$('cancelPlayer').onclick=()=>{$('playerForm').reset();$('playerId').value='';$('pPhoto').value=''};
+$('matchForm').addEventListener('submit',e=>{e.preventDefault();let id=$('matchId').value||uid();let stats={};document.querySelectorAll('[data-stat]').forEach(el=>{let pid=el.dataset.stat,key=el.dataset.key;stats[pid]??={g:0,a:0,pm:0,pim:0,played:false};stats[pid][key]=key==='played'?el.checked:(+el.value||0)});let m={id,date:$('mDate').value,opponent:$('mOpponent').value.trim(),home:$('mHome').value,status:$('mStatus').value,us:+$('mUs').value||0,them:+$('mThem').value||0,note:$('mNote').value.trim(),stats};let ix=db.matches.findIndex(x=>x.id===id);if(ix>=0)db.matches[ix]=m;else db.matches.push(m);$('matchForm').reset();$('matchId').value='';render();save()});
+function editMatch(id){let m=db.matches.find(x=>x.id===id);if(!m)return;showTab('admin');$('matchId').value=m.id;$('mDate').value=m.date;$('mOpponent').value=m.opponent;$('mHome').value=m.home;$('mStatus').value=m.status;$('mUs').value=m.us;$('mThem').value=m.them;$('mNote').value=m.note||'';Object.entries(m.stats||{}).forEach(([pid,s])=>Object.entries(s).forEach(([key,val])=>{let el=document.querySelector(`[data-stat="${pid}"][data-key="${key}"]`);if(el){if(key==='played')el.checked=!!val;else el.value=val}}));window.scrollTo({top:document.body.scrollHeight,behavior:'smooth'})}
+$('cancelMatch').onclick=()=>{$('matchForm').reset();$('matchId').value='';render()};
+$('exportBtn').onclick=()=>{let a=document.createElement('a');a.href=URL.createObjectURL(new Blob([JSON.stringify(db,null,2)],{type:'application/json'}));a.download='hc-monaco-kouty-zaloha.json';a.click();URL.revokeObjectURL(a.href)};
+$('importFile').onchange=async e=>{let f=e.target.files[0];if(!f)return;try{let x=JSON.parse(await f.text());if(!Array.isArray(x.players)||!Array.isArray(x.matches))throw Error();if(confirm('Nahradit místní data obsahem zálohy?')){db=x;save()}}catch{alert('Soubor není platná záloha HC Monaco Kouty.')}e.target.value=''};
+$('resetBtn').onclick=()=>{if(confirm('Opravdu trvale smazat všechna místní data této ukázky?')){db={players:[],matches:[]};save()}};
+if('serviceWorker' in navigator && location.protocol.startsWith('http'))navigator.serviceWorker.register('./sw.js').catch(()=>{});
+render();
+</script>
+</body></html>
